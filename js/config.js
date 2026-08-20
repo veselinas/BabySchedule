@@ -14,7 +14,7 @@ window.APP_CONFIG = {
   CLIENT_ID: "b6a08210-257c-4b6b-8409-592dddfe3abf", // <-- REQUIRED: paste your client ID
   AUTHORITY: "https://login.microsoftonline.com/common", // personal Microsoft/OneDrive accounts
   REDIRECT_URI: 'https://veselinas.github.io/BabySchedule/',
-  SCOPES: ["Files.ReadWrite", "User.Read"],
+  SCOPES: ["Files.ReadWrite"],
   ONEDRIVE_FOLDER: "App_BabySchedule",
   // Set to true to use the browser's localStorage instead of OneDrive.
   // Handy for trying the app out before Azure is set up, or for offline use.
