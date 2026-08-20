@@ -12,8 +12,8 @@
 // down to only the permissions listed below.
 window.APP_CONFIG = {
   CLIENT_ID: "5906f01c-13ca-43ae-a9fb-83993f36b781", // <-- REQUIRED: paste your client ID
-  AUTHORITY: "https://login.microsoftonline.com/consumers", // personal Microsoft/OneDrive accounts
-  REDIRECT_URI: window.location.origin + window.location.pathname,
+  AUTHORITY: "https://login.microsoftonline.com/common", // personal Microsoft/OneDrive accounts
+  REDIRECT_URI: 'https://veselinas.github.io/BabySchedule/',
   SCOPES: ["Files.ReadWrite", "User.Read"],
   ONEDRIVE_FOLDER: "App_BabySchedule",
   // Set to true to use the browser's localStorage instead of OneDrive.
