@@ -31,7 +31,7 @@ window.AuthService = class AuthService {
   isSignedIn() { return !!this.account; }
 
   async signIn() {
-    const result = await this.msal.loginPopup({ scopes: this.config.SCOPES });
+    const result = await this.msal.loginRedirect({ scopes: this.config.SCOPES });
     this.account = result.account;
     return this.account;
   }
