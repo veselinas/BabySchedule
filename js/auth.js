@@ -15,9 +15,10 @@ window.AuthService = class AuthService {
       auth: {
         clientId: this.config.CLIENT_ID,
         authority: this.config.AUTHORITY,
-        redirectUri: this.config.REDIRECT_URI
+        redirectUri: this.config.REDIRECT_URI,
+        navigateToLoginRequestUrl: false
       },
-      cache: { cacheLocation: "localStorage" }
+      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
     });
     await this.msal.initialize();
     const resp = await this.msal.handleRedirectPromise();
