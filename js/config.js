@@ -11,7 +11,7 @@
 // for a SPA/public client, but keep the app registration itself locked
 // down to only the permissions listed below.
 window.APP_CONFIG = {
-  CLIENT_ID: "5906f01c-13ca-43ae-a9fb-83993f36b781", // <-- REQUIRED: paste your client ID
+  CLIENT_ID: "b6a08210-257c-4b6b-8409-592dddfe3abf", // <-- REQUIRED: paste your client ID
   AUTHORITY: "https://login.microsoftonline.com/common", // personal Microsoft/OneDrive accounts
   REDIRECT_URI: 'https://veselinas.github.io/BabySchedule/',
   SCOPES: ["Files.ReadWrite", "User.Read"],
