@@ -19,7 +19,7 @@ window.APP_CONFIG = {
   // Set to true to use the browser's localStorage instead of OneDrive.
   // Handy for trying the app out before Azure is set up, or for offline use.
   // Flip to false once CLIENT_ID above is filled in and you want real sync.
-  USE_LOCAL_STORAGE_ONLY: true
+  USE_LOCAL_STORAGE_ONLY: false
 };
 
 // --- Controlled vocabularies (used across blocks) -------------------------
