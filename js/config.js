@@ -11,7 +11,7 @@
 // for a SPA/public client, but keep the app registration itself locked
 // down to only the permissions listed below.
 window.APP_CONFIG = {
-  CLIENT_ID: "YOUR_AZURE_CLIENT_ID_HERE", // <-- REQUIRED: paste your client ID
+  CLIENT_ID: "5906f01c-13ca-43ae-a9fb-83993f36b781", // <-- REQUIRED: paste your client ID
   AUTHORITY: "https://login.microsoftonline.com/consumers", // personal Microsoft/OneDrive accounts
   REDIRECT_URI: window.location.origin + window.location.pathname,
   SCOPES: ["Files.ReadWrite", "User.Read"],
