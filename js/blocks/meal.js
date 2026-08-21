@@ -101,7 +101,12 @@ window.MealBlock = class MealBlock extends BaseBlock {
         <span>Food items</span>
         <button type="button" class="add-row-btn" title="Add food item">&#10133;</button>
       </div>
-      <div class="meal-items-list"></div>
+      <div class="meal-items-table-scroll">
+        <div class="meal-item-row meal-item-row-header">
+          <span>Meal</span><span>Ingredients</span><span>Rating</span><span>Reaction</span><span></span>
+        </div>
+        <div class="meal-items-list"></div>
+      </div>
     `;
     wrap.appendChild(itemsWrap);
     const itemsList = itemsWrap.querySelector(".meal-items-list");
