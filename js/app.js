@@ -46,6 +46,7 @@
     if (APP_CONFIG.USE_LOCAL_STORAGE_ONLY) {
       state.store = new LocalStore();
       await state.store.init();
+      state.dataStore = new DataStore(state.store);
       els.accountLabel.textContent = state.store.accountLabel;
       els.signInBtn.style.display = "none";
     } else {
@@ -58,13 +59,13 @@
           try {
             await state.auth.signIn();
             await finishOneDriveInit();
+            await refreshLayoutSelect(true);
           } catch (e) { showToast("Sign-in failed: " + e.message, true); }
         });
         return; // wait for sign-in
       }
       await finishOneDriveInit();
     }
-    state.dataStore = new DataStore(state.store);
   }
 
   async function finishOneDriveInit() {
@@ -73,7 +74,6 @@
     state.dataStore = new DataStore(state.store);
     els.accountLabel.textContent = state.store.accountLabel;
     els.signInBtn.style.display = "none";
-    await refreshLayoutSelect(true);
   }
 
   // ---------------------------------------------------------------- layouts
@@ -109,7 +109,9 @@
   }
 
   // ---------------------------------------------------------------- rendering
+  let renderToken = 0;
   async function renderBlocks() {
+    const myToken = ++renderToken;
     els.blocksContainer.innerHTML = "";
     state.renderedBlocks = [];
     if (!state.currentLayoutFile) {
@@ -117,11 +119,13 @@
       return;
     }
     const { rows } = await state.dataStore.readLayout(state.currentLayoutFile);
+    if (myToken !== renderToken) return; // a newer render started meanwhile — abandon this one
     if (!rows.length) {
       els.blocksContainer.innerHTML = `<p class="muted empty-state">This layout has no blocks.</p>`;
       return;
     }
     for (const layoutRow of rows) {
+      if (myToken !== renderToken) return;
       const cls = BlockRegistry.get(layoutRow.type);
       const card = document.createElement("div");
       card.className = "block-card";
@@ -131,14 +135,16 @@
       card.appendChild(title);
       const body = document.createElement("div");
       card.appendChild(body);
-      els.blocksContainer.appendChild(card);
 
       if (!cls) {
         body.innerHTML = `<p class="muted">Unknown block type: ${layoutRow.type}</p>`;
+        els.blocksContainer.appendChild(card);
         continue;
       }
       const instance = new cls(layoutRow);
       await instance.renderInstance(body, { date: state.currentDate, dataStore: state.dataStore, layoutRow });
+      if (myToken !== renderToken) return; // abandon: a newer render superseded this one
+      els.blocksContainer.appendChild(card);
       state.renderedBlocks.push({ instance, layoutRow });
     }
   }
