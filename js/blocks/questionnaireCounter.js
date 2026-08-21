@@ -65,13 +65,14 @@ window.QuestionnaireCounterBlock = class QuestionnaireCounterBlock extends BaseB
       return history.length ? history[history.length - 1].answer : null;
     };
 
-    const widget = FieldWidgets.createFieldWidget({
+  const widget = FieldWidgets.createFieldWidget({
       name: question,
       subtype: cfg.subtype,
       increment: cfg.increment,
       defaultMode: cfg.defaultMode,
       initialValue: existing ? existing.answer : undefined,
-      resolveLastValue
+      resolveLastValue,
+      hideLabel: true
     });
     container.appendChild(widget.el);
     this._widget = widget;
