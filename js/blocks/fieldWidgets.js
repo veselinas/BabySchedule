@@ -33,8 +33,9 @@ window.FieldWidgets = (function () {
    *   resolveLastValue: optional () -> number|null, used when defaultMode===1 and no initialValue exists
    * Returns { el, getValue(), setValue(v) }
    */
-  function createFieldWidget(opts) {
+    function createFieldWidget(opts) {
     const { name, subtype } = opts;
+    const hideLabel = !!opts.hideLabel;
     const row = document.createElement("div");
     row.className = `field-row field-${subtype}`;
 
@@ -46,8 +47,10 @@ window.FieldWidgets = (function () {
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = opts.initialValue === "yes";
+      cb.setAttribute("aria-label", name);
       const span = document.createElement("span");
-      span.textContent = name;
+      if (!hideLabel) span.textContent = name;
+      else span.className = "visually-hidden";
       label.appendChild(cb);
       label.appendChild(span);
       row.appendChild(label);
@@ -55,10 +58,12 @@ window.FieldWidgets = (function () {
       setValue = v => { cb.checked = v === "yes"; };
 
     } else if (subtype === "rating") {
-      const label = document.createElement("div");
-      label.className = "field-label";
-      label.textContent = name;
-      row.appendChild(label);
+      if (!hideLabel) {
+        const label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = name;
+        row.appendChild(label);
+      }
       const group = document.createElement("div");
       group.className = "field-rating-group";
       const groupName = `rating_${name}_${Math.random().toString(36).slice(2)}`;
@@ -84,11 +89,13 @@ window.FieldWidgets = (function () {
         if (target) target.checked = true;
       };
 
-    } else { // counter
-      const label = document.createElement("div");
-      label.className = "field-label";
-      label.textContent = name;
-      row.appendChild(label);
+   } else { // counter
+      if (!hideLabel) {
+        const label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = name;
+        row.appendChild(label);
+      }
 
       const wrap = document.createElement("div");
       wrap.className = "field-counter";
