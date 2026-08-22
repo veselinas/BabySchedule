@@ -57,6 +57,7 @@ function removeDateFromList(csvList, dateCode) {
 window.MealBlock = class MealBlock extends BaseBlock {
   static get typeKey() { return "meal"; }
   static get label() { return "Meal"; }
+  static get defaultCollapsed() { return true; }
 
   static renderConfigEditor(container, onChange) {
     container.innerHTML = `<p class="muted">A meal entry — no extra setup needed.</p>`;
@@ -92,7 +93,9 @@ window.MealBlock = class MealBlock extends BaseBlock {
     typeSelect.value = existing ? existing.type : "breakfast";
     const timeEl = topRow.querySelector(".meal-time");
     timeEl.value = existing ? existing.time : "";
-
+    const refreshTitleTime = () => { if (typeof ctx.setTitleTime === "function") ctx.setTitleTime(timeEl.value || ""); };
+    timeEl.addEventListener("input", refreshTitleTime);
+    refreshTitleTime();
     // Food items table
     const itemsWrap = document.createElement("div");
     itemsWrap.className = "meal-items";
