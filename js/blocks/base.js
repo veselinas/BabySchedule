@@ -31,6 +31,8 @@ window.BaseBlock = class BaseBlock {
   static get typeKey() { throw new Error("typeKey not implemented"); }
   static get label() { throw new Error("label not implemented"); }
 
+  /** Whether this block's card starts collapsed. Main blocks (sleep/bottle/meal) override this to true. */
+  static get defaultCollapsed() { return false; }
   /**
    * Renders the small config form used inside the "add block" layout editor
    * (e.g. asking for a question name / subtype / increment).
