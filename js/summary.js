@@ -267,18 +267,25 @@
     const foodSection = document.createElement("div");
     foodSection.className = "summary-section";
     foodSection.innerHTML = `<h3>Food</h3>`;
-    if (mealItems.length) {
-      const ul = document.createElement("ul");
-      ul.className = "summary-meal-list";
+   if (mealItems.length) {
+      const groups = {}; // rating -> ["meal name" + reaction icon, ...]
       mealItems.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = `${RATING_EMOJI[item.rating] || "•"} ${item.meal}${reactionIcon(item.reaction)}`;
-        ul.appendChild(li);
+        const key = item.rating || "";
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(`${item.meal}${reactionIcon(item.reaction)}`);
       });
-      foodSection.appendChild(ul);
+      const ratingOrder = ["accepted", "neutral", "not accepted"];
+      const orderedKeys = ratingOrder.filter(r => groups[r]).concat(Object.keys(groups).filter(r => !ratingOrder.includes(r)));
+      const dl = document.createElement("dl");
+      dl.className = "summary-stat-list";
+      dl.innerHTML = orderedKeys
+        .map(rating => `<dt>${RATING_EMOJI[rating] || "•"}</dt><dd>${groups[rating].join(", ")}</dd>`)
+        .join("");
+      foodSection.appendChild(dl);
     } else {
       foodSection.innerHTML += `<p class="muted">No meals logged for this date.</p>`;
     }
+    
     let fHtml = "";
     if (hydrationFood.dirtyNappies !== null) fHtml += `<dt>Dirty nappies</dt><dd>${hydrationFood.dirtyNappies}</dd>`;
     if (hydrationFood.constipation !== null) fHtml += `<dt>Constipation</dt><dd>${hydrationFood.constipation}</dd>`;
