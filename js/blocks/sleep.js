@@ -90,11 +90,17 @@ window.SleepBlock = class SleepBlock extends BaseBlock {
     const durEl = timeRow.querySelector(".sleep-duration");
     startEl.value = existing ? existing.start_time : "";
     endEl.value = existing ? existing.end_time : "";
-    const refreshDuration = () => { durEl.textContent = "Duration: " + (computeDuration(startEl.value, endEl.value) || "—"); };
+    const refreshDuration = () => {
+      durEl.textContent = "Duration: " + (computeDuration(startEl.value, endEl.value) || "—");
+      if (typeof ctx.setTitleTime === "function") {
+        const label = startEl.value && endEl.value ? `${startEl.value} – ${endEl.value}`
+          : (startEl.value ? `${startEl.value} – …` : "");
+        ctx.setTitleTime(label);
+      }
+    };
     startEl.addEventListener("input", refreshDuration);
     endEl.addEventListener("input", refreshDuration);
     refreshDuration();
-
     // Location
     const locRow = document.createElement("div");
     locRow.className = "field-row";
