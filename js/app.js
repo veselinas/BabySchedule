@@ -21,6 +21,7 @@
     addLayoutBtn: document.getElementById("add-layout-btn"),
     layoutSelect: document.getElementById("layout-select"),
     blocksContainer: document.getElementById("blocks-container"),
+    summaryContainer: document.getElementById("summary-container"),
     accountLabel: document.getElementById("account-label"),
     signInBtn: document.getElementById("sign-in-btn"),
     toast: document.getElementById("toast")
@@ -85,7 +86,7 @@
       opt.value = ""; opt.textContent = "No layouts yet — click + to create one";
       els.layoutSelect.appendChild(opt);
       state.currentLayoutFile = null;
-      renderBlocks();
+      renderAll();
       return;
     }
     files.slice().reverse().forEach(f => {
@@ -98,7 +99,7 @@
       state.currentLayoutFile = await state.dataStore.getLatestLayoutFilename();
     }
     els.layoutSelect.value = state.currentLayoutFile;
-    renderBlocks();
+    renderAll();
   }
 
   function describeLayoutFile(filename) {
@@ -109,6 +110,7 @@
   }
 
   // ---------------------------------------------------------------- rendering
+    // ---------------------------------------------------------------- rendering
   let renderToken = 0;
   async function renderBlocks() {
     const myToken = ++renderToken;
@@ -127,13 +129,26 @@
     for (const layoutRow of rows) {
       if (myToken !== renderToken) return;
       const cls = BlockRegistry.get(layoutRow.type);
+
       const card = document.createElement("div");
       card.className = "block-card";
-      const title = document.createElement("div");
-      title.className = "block-card-title";
-      title.textContent = layoutRow.name || (cls ? cls.label : layoutRow.type);
-      card.appendChild(title);
+      if (cls && cls.defaultCollapsed) card.classList.add("collapsed");
+
+      const header = document.createElement("button");
+      header.type = "button";
+      header.className = "block-card-header";
+      header.innerHTML = `
+        <span class="block-card-chevron">&#9656;</span>
+        <span class="block-card-title"></span>
+        <span class="block-card-time muted"></span>
+      `;
+      header.querySelector(".block-card-title").textContent = layoutRow.name || (cls ? cls.label : layoutRow.type);
+      const timeEl = header.querySelector(".block-card-time");
+      header.addEventListener("click", () => card.classList.toggle("collapsed"));
+      card.appendChild(header);
+
       const body = document.createElement("div");
+      body.className = "block-card-body";
       card.appendChild(body);
 
       if (!cls) {
@@ -142,7 +157,12 @@
         continue;
       }
       const instance = new cls(layoutRow);
-      await instance.renderInstance(body, { date: state.currentDate, dataStore: state.dataStore, layoutRow });
+      await instance.renderInstance(body, {
+        date: state.currentDate,
+        dataStore: state.dataStore,
+        layoutRow,
+        setTitleTime: text => { timeEl.textContent = text || ""; }
+      });
       if (myToken !== renderToken) return; // abandon: a newer render superseded this one
       els.blocksContainer.appendChild(card);
       state.renderedBlocks.push({ instance, layoutRow });
@@ -150,16 +170,23 @@
   }
 
   // ---------------------------------------------------------------- events
+    // ---------------------------------------------------------------- summary + blocks
+  function renderAll() {
+    renderSummarySection(els.summaryContainer, state.dataStore, state.currentLayoutFile, state.currentDate);
+    return renderBlocks();
+  }
+
+  // ---------------------------------------------------------------- events
   els.dateInput.value = toISODate(state.currentDate);
   els.dateInput.addEventListener("change", () => {
     state.currentDate = fromISODate(els.dateInput.value);
     state.dataStore.clearCache();
-    renderBlocks();
+    renderAll();
   });
 
   els.layoutSelect.addEventListener("change", () => {
     state.currentLayoutFile = els.layoutSelect.value;
-    renderBlocks();
+    renderAll();
   });
 
   els.addLayoutBtn.addEventListener("click", () => {
