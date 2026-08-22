@@ -24,6 +24,7 @@ window.BOTTLE_HEADERS = [
 window.BottleBlock = class BottleBlock extends BaseBlock {
   static get typeKey() { return "bottle"; }
   static get label() { return "Bottle feeding"; }
+  static get defaultCollapsed() { return true; }
 
   static renderConfigEditor(container, onChange) {
     container.innerHTML = `<p class="muted">A bottle feed entry — no extra setup needed.</p>`;
@@ -46,6 +47,9 @@ window.BottleBlock = class BottleBlock extends BaseBlock {
     wrap.appendChild(timeRow);
     const timeEl = timeRow.querySelector(".bottle-time");
     timeEl.value = existing ? existing.time : "";
+    const refreshTitleTime = () => { if (typeof ctx.setTitleTime === "function") ctx.setTitleTime(timeEl.value || ""); };
+    timeEl.addEventListener("input", refreshTitleTime);
+    refreshTitleTime();
 
     const widgets = {};
     BOTTLE_QC_FIELDS.forEach(f => {
