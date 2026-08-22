@@ -85,7 +85,8 @@
       windows.push({ label: `${fromLabel} → Nap ${i + 1}`, minutes: gap });
     }
     const nextDateCode = DataStore.dateCode(addDays(dateCodeToDate(dateCode), 1));
-    const nextNight = rowsForDate(allSleepRows, nextDateCode).find(r => r.block_id === "1");
+    const nextDayRows = rowsForDate(allSleepRows, nextDateCode);
+    const nextNight = nextDayRows.length ? nextDayRows[0] : null; // first sleep block of the next day = that day's "night", same convention as rows[0] above
     if (nextNight && nextNight.start_time) {
       const gapStart = timeToMinutes(rows[rows.length - 1].end_time);
       const gapEnd = timeToMinutes(nextNight.start_time);
