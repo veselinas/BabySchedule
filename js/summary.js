@@ -104,8 +104,11 @@
   async function computeHydrationFood(dataStore, layoutRows, dateCode) {
     const { rows: qcRows } = await dataStore.readTable(TABLES.QANDC, ["date", "question", "type", "answer"]);
     const { rows: bottleRows } = await dataStore.readTable(TABLES.BOTTLES, BOTTLE_HEADERS);
-    const milk = bottleRows.filter(r => r.date === dateCode).reduce((s, r) => s + (parseFloat(r.quantity_taken) || 0), 0);
-
+    const { rows: sleepRows } = await dataStore.readTable(TABLES.SLEEP, SLEEP_HEADERS);
+    const bottleMilk = bottleRows.filter(r => r.date === dateCode).reduce((s, r) => s + (parseFloat(r.quantity_taken) || 0), 0);
+    const nightMilk = sleepRows.filter(r => r.date === dateCode).reduce((s, r) => s + (parseFloat(r.milk) || 0), 0);
+    const milk = bottleMilk + nightMilk;
+     
     const water = layoutHasField(layoutRows, "Water") ? (parseFloat(getQCAnswer(qcRows, dateCode, "Water")) || 0) : null;
     const wetNappies = layoutHasField(layoutRows, "Wet nappies") ? (parseFloat(getQCAnswer(qcRows, dateCode, "Wet nappies")) || 0) : null;
     const dehydration = layoutHasField(layoutRows, "Dehydration") ? (getQCAnswer(qcRows, dateCode, "Dehydration") || "no") : null;
