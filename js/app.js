@@ -184,7 +184,9 @@
 
   // ---------------------------------------------------------------- summary + blocks
   function renderAll() {
-    renderSummarySection(els.summaryContainer, state.dataStore, state.currentLayoutFile, state.currentDate);
+    if (els.summaryContainer) {
+      renderSummarySection(els.summaryContainer, state.dataStore, state.currentLayoutFile, state.currentDate);
+    }
     return renderBlocks();
   }
 
