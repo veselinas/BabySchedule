@@ -2,15 +2,25 @@
    layoutEditor.js
    The "+" modal for building a new schedule-layout: add blocks in any
    order, configure each, reorder, then Save (writes layout_DDMMYY_n.csv).
+
+   Also reused (via the `options` param) for the exceptions editor —
+   same modal, pre-populated with the day's current blocks, saving to
+   layout_exceptions.csv instead.
    ============================================================ */
 
-window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved) {
+window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved, options) {
+  options = options || {};
+  const title = options.title || "New schedule layout";
+  const saveLabel = options.saveLabel || "Save layout";
+  const initialConfigs = options.initialConfigs || [];
+  const saveFn = options.saveFn || (blockConfigs => dataStore.saveNewLayout(blockConfigs));
+
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <h2>New schedule layout</h2>
+        <h2></h2>
         <button type="button" class="modal-close" title="Close">&#10005;</button>
       </div>
       <div class="modal-body">
@@ -20,10 +30,12 @@ window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved) {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary modal-cancel">Cancel</button>
-        <button type="button" class="btn-primary modal-save">Save layout</button>
+        <button type="button" class="btn-primary modal-save"></button>
       </div>
     </div>
   `;
+  overlay.querySelector(".modal-header h2").textContent = title;
+  overlay.querySelector(".modal-save").textContent = saveLabel;
   document.body.appendChild(overlay);
 
   const closeModal = () => overlay.remove();
@@ -53,8 +65,12 @@ window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved) {
     picker.appendChild(btn);
   });
 
-  function addBlockRow(cls) {
-    const entry = { type: cls.typeKey, name: cls.label, info: "" };
+  function addBlockRow(cls, initialConfig) {
+    const entry = {
+      type: cls.typeKey,
+      name: (initialConfig && initialConfig.name) || cls.label,
+      info: (initialConfig && initialConfig.info) || ""
+    };
     const row = document.createElement("div");
     row.className = "layout-block-row";
     row.innerHTML = `
@@ -73,7 +89,7 @@ window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved) {
     cls.renderConfigEditor(configContainer, (info, name) => {
       entry.info = info;
       entry.name = name || cls.label;
-    });
+    }, initialConfig);
 
     row.querySelector(".remove-block").addEventListener("click", () => {
       const idx = blockConfigs.indexOf(entry);
@@ -99,19 +115,25 @@ window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved) {
     listEl.appendChild(row);
   }
 
+  initialConfigs.forEach(cfg => {
+    const cls = BlockRegistry.get(cfg.type);
+    if (!cls) { console.warn("Skipping unknown block type in initial config:", cfg.type); return; }
+    addBlockRow(cls, cfg);
+  });
+
   overlay.querySelector(".modal-save").addEventListener("click", async () => {
     if (!blockConfigs.length) { alert("Add at least one block first."); return; }
     const saveBtn = overlay.querySelector(".modal-save");
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving…";
     try {
-      const filename = await dataStore.saveNewLayout(blockConfigs);
+      const result = await saveFn(blockConfigs);
       closeModal();
-      onSaved(filename);
+      onSaved(result);
     } catch (e) {
-      alert("Could not save layout: " + e.message);
+      alert("Could not save: " + e.message);
       saveBtn.disabled = false;
-      saveBtn.textContent = "Save layout";
+      saveBtn.textContent = saveLabel;
     }
   });
 };
