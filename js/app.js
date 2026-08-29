@@ -19,6 +19,7 @@
     dateInput: document.getElementById("date-input"),
     saveBtn: document.getElementById("save-btn"),
     addLayoutBtn: document.getElementById("add-layout-btn"),
+    addExceptionBtn: document.getElementById("add-exception-btn"),
     layoutSelect: document.getElementById("layout-select"),
     blocksContainer: document.getElementById("blocks-container"),
     summaryContainer: document.getElementById("summary-container"),
@@ -110,22 +111,34 @@
   }
 
   // ---------------------------------------------------------------- rendering
-    // ---------------------------------------------------------------- rendering
   let renderToken = 0;
   async function renderBlocks() {
     const myToken = ++renderToken;
     els.blocksContainer.innerHTML = "";
     state.renderedBlocks = [];
-    if (!state.currentLayoutFile) {
-      els.blocksContainer.innerHTML = `<p class="muted empty-state">No layout selected yet. Use the + button above to build one.</p>`;
-      return;
-    }
-    const { rows } = await state.dataStore.readLayout(state.currentLayoutFile);
+    const { rows, isException } = await state.dataStore.getEffectiveLayoutRows(state.currentLayoutFile, state.currentDate);
     if (myToken !== renderToken) return; // a newer render started meanwhile — abandon this one
     if (!rows.length) {
-      els.blocksContainer.innerHTML = `<p class="muted empty-state">This layout has no blocks.</p>`;
+      const msg = state.currentLayoutFile ? "This layout has no blocks." : "No layout selected yet. Use the + button above to build one.";
+      els.blocksContainer.innerHTML = `<p class="muted empty-state">${msg}</p>`;
       return;
     }
+
+    if (isException) {
+      const banner = document.createElement("div");
+      banner.className = "exception-banner";
+      banner.innerHTML = `
+        <span>Using one-off blocks for this date only.</span>
+        <button type="button" class="link-btn revert-exception-btn">Revert to default layout</button>
+      `;
+      banner.querySelector(".revert-exception-btn").addEventListener("click", async () => {
+        await state.dataStore.clearExceptionsForDate(DataStore.dateCode(state.currentDate));
+        showToast("Reverted to default layout");
+        renderAll();
+      });
+      els.blocksContainer.appendChild(banner);
+    }
+
     for (const layoutRow of rows) {
       if (myToken !== renderToken) return;
       const cls = BlockRegistry.get(layoutRow.type);
@@ -169,8 +182,7 @@
     }
   }
 
-  // ---------------------------------------------------------------- events
-    // ---------------------------------------------------------------- summary + blocks
+  // ---------------------------------------------------------------- summary + blocks
   function renderAll() {
     renderSummarySection(els.summaryContainer, state.dataStore, state.currentLayoutFile, state.currentDate);
     return renderBlocks();
@@ -195,6 +207,20 @@
       await refreshLayoutSelect(false);
       els.layoutSelect.value = filename;
       showToast("Layout created");
+    });
+  });
+
+  els.addExceptionBtn.addEventListener("click", async () => {
+    const dateCode = DataStore.dateCode(state.currentDate);
+    const { rows: currentRows } = await state.dataStore.getEffectiveLayoutRows(state.currentLayoutFile, state.currentDate);
+    openLayoutEditor(state.dataStore, () => {
+      renderAll();
+      showToast("Exception saved for " + toISODate(state.currentDate));
+    }, {
+      title: `Exceptions for ${toISODate(state.currentDate)}`,
+      saveLabel: "Save exceptions",
+      initialConfigs: currentRows.map(r => ({ type: r.type, name: r.name, info: r.info })),
+      saveFn: blockConfigs => state.dataStore.saveExceptionsForDate(dateCode, blockConfigs)
     });
   });
 
