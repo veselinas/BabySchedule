@@ -3,6 +3,7 @@
    Sits on top of a Store (LocalStore or OneDriveStore) and knows
    about the app's specific files:
      layout_<DDMMYY>_<n>.csv   (one per saved layout)
+     layout_exceptions.csv     (one-off per-date overrides of a layout)
      QuestionnairesAndCounters.csv
      Sleep.csv
      Bottles.csv
@@ -17,8 +18,10 @@ window.TABLES = {
   BOTTLES: "Bottles.csv",
   MEALS: "Meals.csv",
   MEALS_INVENTORY: "MealsInventory.csv",
-  DIARY: "Diary.csv"
+  DIARY: "Diary.csv",
+  EXCEPTIONS: "layout_exceptions.csv"
 };
+window.EXCEPTIONS_HEADERS = ["date", "order", "type", "name", "info"];
 
 window.DataStore = class DataStore {
   constructor(store) {
@@ -81,6 +84,43 @@ window.DataStore = class DataStore {
     const text = CSVUtil.toCSV(rows, headers);
     await this.store.writeFile(filename, text);
     return filename;
+  }
+
+  // ---------- per-date layout exceptions ---------------------------------
+  /** Rows for one date from layout_exceptions.csv, in order — [] if none. */
+  async readExceptionsForDate(dateCode) {
+    const { rows } = await this.readTable(TABLES.EXCEPTIONS, EXCEPTIONS_HEADERS);
+    return rows
+      .filter(r => r.date === dateCode)
+      .map(r => ({ order: Number(r.order), type: r.type, name: r.name, info: r.info }))
+      .sort((a, b) => a.order - b.order);
+  }
+
+  /** Overwrites the exception rows for one date with the given block configs. */
+  async saveExceptionsForDate(dateCode, blockConfigs) {
+    const rows = blockConfigs.map((c, i) => ({
+      date: dateCode, order: i + 1, type: c.type, name: c.name, info: c.info || ""
+    }));
+    await this.upsertRows(TABLES.EXCEPTIONS, EXCEPTIONS_HEADERS, r => r.date === dateCode, rows);
+  }
+
+  /** Removes any exception rows for one date, reverting it back to the default layout. */
+  async clearExceptionsForDate(dateCode) {
+    await this.upsertRows(TABLES.EXCEPTIONS, EXCEPTIONS_HEADERS, r => r.date === dateCode, []);
+  }
+
+  /**
+   * The blocks that should actually be shown for `date`: the day's exceptions
+   * if any exist, otherwise the given default layout file's blocks.
+   * Returns { rows, isException }.
+   */
+  async getEffectiveLayoutRows(layoutFile, date) {
+    const dateCode = DataStore.dateCode(date);
+    const exceptionRows = await this.readExceptionsForDate(dateCode);
+    if (exceptionRows.length) return { rows: exceptionRows, isException: true };
+    if (!layoutFile) return { rows: [], isException: false };
+    const { rows } = await this.readLayout(layoutFile);
+    return { rows, isException: false };
   }
 
   // ---------- generic table access --------------------------------------
