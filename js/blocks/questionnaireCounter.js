@@ -8,7 +8,7 @@ window.QuestionnaireCounterBlock = class QuestionnaireCounterBlock extends BaseB
   static get typeKey() { return "questionnaire_counter"; }
   static get label() { return "Question / Counter"; }
 
-  static renderConfigEditor(container, onChange) {
+  static renderConfigEditor(container, onChange, initialConfig) {
     container.innerHTML = `
       <label class="form-label">Question / field name
         <input type="text" class="qc-name" placeholder="e.g. Brush teeth" />
@@ -38,6 +38,16 @@ window.QuestionnaireCounterBlock = class QuestionnaireCounterBlock extends BaseB
     const incEl = container.querySelector(".qc-increment");
     const modeEl = container.querySelector(".qc-default-mode");
 
+    if (initialConfig) {
+      nameEl.value = initialConfig.name || "";
+      const parsed = FieldWidgets.parseInfo(initialConfig.info);
+      subtypeEl.value = parsed.subtype;
+      if (parsed.subtype === "counter") {
+        incEl.value = parsed.increment;
+        modeEl.value = String(parsed.defaultMode);
+      }
+    }
+
     function emit() {
       extraEl.style.display = subtypeEl.value === "counter" ? "block" : "none";
       const info = FieldWidgets.toInfo(subtypeEl.value, incEl.value, modeEl.value);
@@ -65,7 +75,7 @@ window.QuestionnaireCounterBlock = class QuestionnaireCounterBlock extends BaseB
       return history.length ? history[history.length - 1].answer : null;
     };
 
-  const widget = FieldWidgets.createFieldWidget({
+    const widget = FieldWidgets.createFieldWidget({
       name: question,
       subtype: cfg.subtype,
       increment: cfg.increment,
