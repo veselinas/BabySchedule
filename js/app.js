@@ -210,19 +210,23 @@
     });
   });
 
-  els.addExceptionBtn.addEventListener("click", async () => {
-    const dateCode = DataStore.dateCode(state.currentDate);
-    const { rows: currentRows } = await state.dataStore.getEffectiveLayoutRows(state.currentLayoutFile, state.currentDate);
-    openLayoutEditor(state.dataStore, () => {
-      renderAll();
-      showToast("Exception saved for " + toISODate(state.currentDate));
-    }, {
-      title: `Exceptions for ${toISODate(state.currentDate)}`,
-      saveLabel: "Save exceptions",
-      initialConfigs: currentRows.map(r => ({ type: r.type, name: r.name, info: r.info })),
-      saveFn: blockConfigs => state.dataStore.saveExceptionsForDate(dateCode, blockConfigs)
+  if (els.addExceptionBtn) {
+    els.addExceptionBtn.addEventListener("click", async () => {
+      const dateCode = DataStore.dateCode(state.currentDate);
+      const { rows: currentRows } = await state.dataStore.getEffectiveLayoutRows(state.currentLayoutFile, state.currentDate);
+      openLayoutEditor(state.dataStore, () => {
+        renderAll();
+        showToast("Exception saved for " + toISODate(state.currentDate));
+      }, {
+        title: `Exceptions for ${toISODate(state.currentDate)}`,
+        saveLabel: "Save exceptions",
+        initialConfigs: currentRows.map(r => ({ type: r.type, name: r.name, info: r.info })),
+        saveFn: blockConfigs => state.dataStore.saveExceptionsForDate(dateCode, blockConfigs)
+      });
     });
-  });
+  } else {
+    console.warn('"#add-exception-btn" not found in the page — the exceptions feature needs that button in index.html.');
+  }
 
   els.saveBtn.addEventListener("click", async () => {
     if (!state.renderedBlocks.length) return;
