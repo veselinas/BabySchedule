@@ -218,16 +218,23 @@
     const wrapper = document.createElement("div");
     wrapper.className = "summary-content";
 
-    if (!layoutFile) {
+    const { rows: layoutRows, isException } = await dataStore.getEffectiveLayoutRows(layoutFile, date);
+    if (!layoutRows.length) {
       wrapper.innerHTML = `<p class="muted">No layout selected — pick one above first.</p>`;
       return wrapper;
     }
 
-    const { rows: layoutRows } = await dataStore.readLayout(layoutFile);
     const { rows: allSleepRows } = await dataStore.readTable(TABLES.SLEEP, SLEEP_HEADERS);
     const sleepStats = computeSleepStats(allSleepRows, dateCode);
     const hydrationFood = await computeHydrationFood(dataStore, layoutRows, dateCode);
     const mealItems = await getMealItemsForDate(dataStore, dateCode);
+
+    if (isException) {
+      const note = document.createElement("p");
+      note.className = "muted";
+      note.textContent = "This date uses one-off blocks — stats reflect that day's actual blocks.";
+      wrapper.appendChild(note);
+    }
 
     // Sleep
     const sleepSection = document.createElement("div");
@@ -267,25 +274,18 @@
     const foodSection = document.createElement("div");
     foodSection.className = "summary-section";
     foodSection.innerHTML = `<h3>Food</h3>`;
-   if (mealItems.length) {
-      const groups = {}; // rating -> ["meal name" + reaction icon, ...]
+    if (mealItems.length) {
+      const ul = document.createElement("ul");
+      ul.className = "summary-meal-list";
       mealItems.forEach(item => {
-        const key = item.rating || "";
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(`${item.meal}${reactionIcon(item.reaction)}`);
+        const li = document.createElement("li");
+        li.textContent = `${RATING_EMOJI[item.rating] || "•"} ${item.meal}${reactionIcon(item.reaction)}`;
+        ul.appendChild(li);
       });
-      const ratingOrder = ["accepted", "neutral", "not accepted"];
-      const orderedKeys = ratingOrder.filter(r => groups[r]).concat(Object.keys(groups).filter(r => !ratingOrder.includes(r)));
-      const dl = document.createElement("dl");
-      dl.className = "summary-stat-list";
-      dl.innerHTML = orderedKeys
-        .map(rating => `<dt>${RATING_EMOJI[rating] || "•"}</dt><dd>${groups[rating].join(", ")}</dd>`)
-        .join("");
-      foodSection.appendChild(dl);
+      foodSection.appendChild(ul);
     } else {
       foodSection.innerHTML += `<p class="muted">No meals logged for this date.</p>`;
     }
-    
     let fHtml = "";
     if (hydrationFood.dirtyNappies !== null) fHtml += `<dt>Dirty nappies</dt><dd>${hydrationFood.dirtyNappies}</dd>`;
     if (hydrationFood.constipation !== null) fHtml += `<dt>Constipation</dt><dd>${hydrationFood.constipation}</dd>`;
@@ -313,7 +313,8 @@
 
     const hydrationData = [];
     for (const d of weekDates) {
-      hydrationData.push({ date: d, ...(await computeHydrationFood(dataStore, layoutRows, DataStore.dateCode(d))) });
+      const { rows: dayLayoutRows } = await dataStore.getEffectiveLayoutRows(layoutFile, d);
+      hydrationData.push({ date: d, ...(await computeHydrationFood(dataStore, dayLayoutRows, DataStore.dateCode(d))) });
     }
     const hydrationPlot = document.createElement("div");
     hydrationPlot.className = "summary-plot";
