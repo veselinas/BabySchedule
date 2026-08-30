@@ -69,7 +69,8 @@ window.openLayoutEditor = function openLayoutEditor(dataStore, onSaved, options)
     const entry = {
       type: cls.typeKey,
       name: (initialConfig && initialConfig.name) || cls.label,
-      info: (initialConfig && initialConfig.info) || ""
+      info: (initialConfig && initialConfig.info) || "",
+      uid: (initialConfig && initialConfig.uid) || DataStore.generateUid()
     };
     const row = document.createElement("div");
     row.className = "layout-block-row";
