@@ -54,7 +54,7 @@ window.SleepBlock = class SleepBlock extends BaseBlock {
   async renderInstance(container, ctx) {
     const { date, dataStore, layoutRow } = ctx;
     const dateCode = DataStore.dateCode(date);
-    const blockId = String(layoutRow.order);
+    const blockId = layoutRow.uid || String(layoutRow.order);
     const { rows } = await dataStore.readTable(TABLES.SLEEP, SLEEP_HEADERS);
     const existing = rows.find(r => r.date === dateCode && r.block_id === blockId);
 
