@@ -171,7 +171,7 @@ window.SleepBlock = class SleepBlock extends BaseBlock {
   async save(ctx) {
     const { date, dataStore, layoutRow } = ctx;
     const dateCode = DataStore.dateCode(date);
-    const blockId = String(layoutRow.order);
+    const blockId = layoutRow.uid || String(layoutRow.order);
     const row = this._collect();
     await dataStore.upsertRows(
       TABLES.SLEEP, SLEEP_HEADERS,
