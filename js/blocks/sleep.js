@@ -46,8 +46,6 @@ window.SleepBlock = class SleepBlock extends BaseBlock {
   static get label() { return "Sleep"; }
   static get defaultCollapsed() { return true; }
 
-  static renderConfigEditor
-
   static renderConfigEditor(container, onChange) {
     container.innerHTML = `<p class="muted">A sleep entry — no extra setup needed.</p>`;
     onChange("", "Sleep");
