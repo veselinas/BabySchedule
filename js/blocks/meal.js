@@ -67,7 +67,7 @@ window.MealBlock = class MealBlock extends BaseBlock {
   async renderInstance(container, ctx) {
     const { date, dataStore, layoutRow } = ctx;
     const dateCode = DataStore.dateCode(date);
-    const blockId = String(layoutRow.order);
+    const blockId = layoutRow.uid || String(layoutRow.order);
 
     const { rows: mealRows } = await dataStore.readTable(TABLES.MEALS, MEAL_HEADERS);
     const existing = mealRows.find(r => r.date === dateCode && r.block_id === blockId);
@@ -195,7 +195,7 @@ window.MealBlock = class MealBlock extends BaseBlock {
   async save(ctx) {
     const { date, dataStore, layoutRow } = ctx;
     const dateCode = DataStore.dateCode(date);
-    const blockId = String(layoutRow.order);
+    const blockId = layoutRow.uid || String(layoutRow.order);
     const { mealRow, items } = this._collect();
 
     await dataStore.upsertRows(
