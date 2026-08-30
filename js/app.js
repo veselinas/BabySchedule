@@ -222,7 +222,7 @@
       }, {
         title: `Exceptions for ${toISODate(state.currentDate)}`,
         saveLabel: "Save exceptions",
-        initialConfigs: currentRows.map(r => ({ type: r.type, name: r.name, info: r.info })),
+        initialConfigs: currentRows.map(r => ({ type: r.type, name: r.name, info: r.info, uid: r.uid })),
         saveFn: blockConfigs => state.dataStore.saveExceptionsForDate(dateCode, blockConfigs)
       });
     });
