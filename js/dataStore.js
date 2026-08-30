@@ -21,12 +21,19 @@ window.TABLES = {
   DIARY: "Diary.csv",
   EXCEPTIONS: "layout_exceptions.csv"
 };
-window.EXCEPTIONS_HEADERS = ["date", "order", "type", "name", "info"];
+window.EXCEPTIONS_HEADERS = ["date", "order", "type", "name", "info", "uid"];
 
 window.DataStore = class DataStore {
   constructor(store) {
     this.store = store;
     this._tableCache = {}; // filename -> {headers, rows}
+  }
+
+  /** A short, stable ID for one block instance within a layout/exception — used as the
+   *  join key for its data row(s) in Sleep.csv/Bottles.csv/Meals.csv/Diary.csv, so
+   *  reordering or inserting blocks elsewhere never orphans already-saved data. */
+  static generateUid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
   // ---------- date helpers -------------------------------------------
@@ -61,9 +68,12 @@ window.DataStore = class DataStore {
 
   async readLayout(filename) {
     const text = await this.store.readFile(filename);
-    if (text === null) return { headers: ["order", "type", "name", "info"], rows: [] };
+    if (text === null) return { headers: ["order", "type", "name", "info", "uid"], rows: [] };
     const { headers, rows } = CSVUtil.parse(text);
-    rows.forEach(r => { r.order = Number(r.order); });
+    rows.forEach(r => {
+      r.order = Number(r.order);
+      if (!r.uid) r.uid = String(r.order); // legacy layout saved before the uid column existed
+    });
     rows.sort((a, b) => a.order - b.order);
     return { headers, rows };
   }
@@ -77,9 +87,9 @@ window.DataStore = class DataStore {
       .map(f => Number(f.match(/_(\d+)\.csv$/)[1]));
     const nextVersion = versions.length ? Math.max(...versions) + 1 : 1;
     const filename = `layout_${dateCode}_${nextVersion}.csv`;
-    const headers = ["order", "type", "name", "info"];
+    const headers = ["order", "type", "name", "info", "uid"];
     const rows = blockConfigs.map((c, i) => ({
-      order: i + 1, type: c.type, name: c.name, info: c.info || ""
+      order: i + 1, type: c.type, name: c.name, info: c.info || "", uid: c.uid || DataStore.generateUid()
     }));
     const text = CSVUtil.toCSV(rows, headers);
     await this.store.writeFile(filename, text);
@@ -92,8 +102,19 @@ window.DataStore = class DataStore {
     const { rows } = await this.readTable(TABLES.EXCEPTIONS, EXCEPTIONS_HEADERS);
     return rows
       .filter(r => r.date === dateCode)
-      .map(r => ({ order: Number(r.order), type: r.type, name: r.name, info: r.info }))
+      .map(r => ({
+        order: Number(r.order), type: r.type, name: r.name, info: r.info,
+        uid: r.uid || String(r.order) // legacy exception row saved before the uid column existed
+      }))
       .sort((a, b) => a.order - b.order);
+  }
+
+  /** Overwrites the exception rows for one date with the given block configs. */
+  async saveExceptionsForDate(dateCode, blockConfigs) {
+    const rows = blockConfigs.map((c, i) => ({
+      date: dateCode, order: i + 1, type: c.type, name: c.name, info: c.info || "", uid: c.uid || DataStore.generateUid()
+    }));
+    await this.upsertRows(TABLES.EXCEPTIONS, EXCEPTIONS_HEADERS, r => r.date === dateCode, rows);
   }
 
   /** Overwrites the exception rows for one date with the given block configs. */
